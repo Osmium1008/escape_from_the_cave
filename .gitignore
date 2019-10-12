@@ -3,10 +3,16 @@
 .vs/
 .idea/
 
+*.vcxproj*
+
+
 # Build Item
 cmake-build-debug/
 build/
 workspace/
 
-.directory
+#OpenSiv3D Item
+App/
 engine/
+
+.directory
