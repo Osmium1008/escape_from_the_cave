@@ -1,0 +1,12 @@
+# IDE
+.vscode/
+.vs/
+.idea/
+
+# Build Item
+cmake-build-debug/
+build/
+workspace/
+
+.directory
+engine/
