@@ -1,13 +1,13 @@
 #include <Siv3D.hpp>
 
-enum Status { _start, _select, _tutorial, _course, _game_finish, _submit, _ranking };
+enum class Status { _start, _select, _tutorial, _course, _game_finish, _submit, _ranking };
 
 class FontManager {
 	Array<Font> fontset;
 
   public:
 	FontManager(int max_size) : fontset(max_size, Font(0)){};
-	Rect draw_center(int font_size, String text, Vec2 pos, ColorF color = ColorF(1.0, 1.0, 1.0), double rect_size = 1.0, Color rect_color = Color(0x0f, 0x13, 0x29)) {
+	Rect draw_center(int font_size, String text, Vec2 pos, HSV rect_color, ColorF color = ColorF(1.0, 1.0, 1.0), double rect_size = 1.0) {
 		if (fontset.at(font_size - 1) == Font(0)) fontset[font_size - 1] = Font(font_size);
 		fontset.at(font_size - 1)(text).region(Arg::center = pos).scaled(rect_size).draw(rect_color);
 		return fontset.at(font_size - 1)(text).draw(Arg::center = pos, color);
@@ -50,7 +50,7 @@ class Player {
 		last_pos = body.center();
 		body.moveBy(speed.asPoint());
 		speed.y += 1;
-		speed.y = 0;
+		speed.x = 0;
 		body.draw(Palette::White);
 		if (death()) {
 			if (position_using_item) {
@@ -83,14 +83,20 @@ class Player {
 	}
 };
 
-class Course {};
+class Course {
+	Player* player;
+	Vec2 course_size;
+
+  public:
+	Course(Player* player,Vec2 course_size) : player(player), course_size(course_size) {}
+};
 
 void Main() {
-	Status status = _start;
-	int status_number = _tutorial;
+	Status status = Status::_start;
+	int status_number = (int)Status::_tutorial;
 
 	FontManager font(60);
-	Scene::SetBackground(Color(0x0f, 0x13, 0x29));
+	HSV BackGroundColor(231, 0.63, 0.16);
 
 	std::chrono::duration<double> clock = 2.0s;
 	Stopwatch time;
@@ -100,29 +106,30 @@ void Main() {
 
 	while (System::Update()) {
 		ClearPrint();
+		Scene::SetBackground(BackGroundColor);
 		double delta = 200 * Scene::DeltaTime();
 
 		switch (status) {
-			case _start:
-				font.draw_center(60, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0));
-				font.draw_center(30, U"---- ↓ キーを押してください ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
-				font.draw_center(30, U" 2019, 制作者:Osmium_1008 ", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 90));
+			case Status::_start:
+				font.draw_center(60, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
+				font.draw_center(30, U"---- ↓ キーを押してください ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
+				font.draw_center(30, U" 2019, 制作者:Osmium_1008 ", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 90), BackGroundColor);
 				if (KeyDown.down()) {
 					clock = 0.2s;
 					time.start();
 				}
 				if (time.sF() > 0.5) {
-					status = _select;
+					status = Status::_select;
 					time.reset();
 				}
 				break;
-			case _select:
-				font.draw_center(45, U" このゲームを遊ぶのは初めてですか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70));
-				font.draw_center(30, U" ←→キー:選択, ↓キー:決定", Scene::Center() / Vec2(1.0, 2.0));
-				font.draw_center(30, U" はい ", Scene::Center() * Vec2(0.5, 1.5), ColorF(0, 0, 0), 1.5, status_number == _tutorial ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255));
-				font.draw_center(30, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), ColorF(0, 0, 0), 1.5, status_number == _course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255));
-				if (KeyRight.down()) status_number = _course;
-				if (KeyLeft.down()) status_number = _tutorial;
+			case Status::_select:
+				font.draw_center(45, U" このゲームを遊ぶのは初めてですか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
+				font.draw_center(30, U" ←→キー:選択, ↓キー:決定", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
+				font.draw_center(30, U" はい ", Scene::Center() * Vec2(0.5, 1.5), (Status)status_number == Status::_tutorial ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5);
+				font.draw_center(30, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), (Status)status_number == Status::_course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5);
+				if (KeyRight.down()) status_number = (int)Status::_course;
+				if (KeyLeft.down()) status_number = (int)Status::_tutorial;
 				if (KeyDown.down()) {
 					clock = 0.2s;
 					time.start();
@@ -133,9 +140,7 @@ void Main() {
 					time.reset();
 				}
 				break;
-			case _tutorial:
-				if (status_number == 8) {
-				}
+			case Status::_tutorial:
 				switch (status_number) {
 					case 0:
 					case 1:
@@ -148,7 +153,7 @@ void Main() {
 					case 8:
 						if (KeyZ.down()) time.start();
 						if (time.sF() > 0.5) {
-							status = _course;
+							status = Status::_course;
 							status_number = 0;
 							time.reset();
 						}
@@ -158,7 +163,7 @@ void Main() {
 						System::Exit();
 				}
 				break;
-			case _course:
+			case Status::_course:
 				if (KeyLeft.pressed()) {
 					player.move(-delta);
 				}
@@ -168,11 +173,11 @@ void Main() {
 				if (KeyUp.pressed()) player.jump(delta);
 				player.update();
 				break;
-			case _game_finish:
+			case Status::_game_finish:
 				break;
-			case _submit:
+			case Status::_submit:
 				break;
-			case _ranking:
+			case Status::_ranking:
 				break;
 		}
 	}
