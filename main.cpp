@@ -39,7 +39,7 @@ class Player {
 		speed.x = a;
 	}
 
-	bool use_item() {
+	bool useItem() {
 		if (item_number == 0) return false;
 		position_using_item << body.pos;
 		return true;
@@ -56,7 +56,7 @@ class Player {
 		if (stopwatch.sF() - last_jump < 0.1 && !up) speed.y -= a;
 	}
 
-	bool update(Mat3x2 matrix) {
+	int update(Mat3x2 matrix) {
 		last_rect = body;
 		body.moveBy(speed.asPoint());
 		speed.y += 50 * Scene::DeltaTime();
@@ -66,12 +66,13 @@ class Player {
 				Vec2 point = position_using_item.back();
 				position_using_item.pop_back();
 				body.setPos(point.Up(30).asPoint());
+				return point.x;
 			}
 			else {
-				return false;
+				return 0;
 			}
 		}
-		return true;
+		return 1;
 	}
 
 	bool death() {
@@ -116,11 +117,16 @@ class Course {
 	Array<Rect> course_block;
 	Rect goal;
 
+	Array<Vec2> course_item;
+
 	double scroll_speed;
 	Mat3x2 matrix;
 
+	Rect wall_right, wall_left;
+
   public:
-	Course(Player* player, Vec2 course_size, Array<Rect> course_block, Rect goal, double scroll_speed) : player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()) {}
+	Course(Player* player, Vec2 course_size, Array<Rect> course_block, Rect goal, double scroll_speed, Array<Vec2> course_item = Array<Vec2>{Vec2(100, 350)}) :
+	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left(-10, -50, 10, 1000), wall_right(800, -50, 10, 1000) {}
 	int update(double x_speed, double y_speed) {
 		matrix = matrix.translated(-scroll_speed * Scene::DeltaTime(), 0);
 		Transformer2D trans(matrix);
@@ -144,14 +150,30 @@ class Course {
 				if (player_last_body.leftCenter().x >= it.rightCenter().x) l = true;
 			}
 		}
+		for (auto it = course_item.begin(); it != course_item.end();) {
+			Circle it_body = Circle(*it, 10);
+			if (it_body.intersects(player_body)) {
+				player->getItem();
+				it = course_item.erase(it);
+			}
+			else {
+				it_body.draw(Palette::Red);
+			}
+		}
 		player->move(x_speed);
 		player->jump(y_speed);
 		player->setIntersects(u, d, r, l);
 		player->moveY(y);
-		Print << u << d << r << l;
-		if (!(player->update(matrix))) return -1;
+		int ret = player->update(matrix);
+		if (0 == ret) return -1;
+		if (ret != 1) setPos(ret);
 		if (goal.intersects(player->getRect())) return 1;
 		return 0;
+	}
+
+	void setPos(double pos_x) {
+		matrix = Mat3x2::Translate(-pos_x - 400, 0);
+		wall_left = Rect(pos_x - 810, -50, 10, 1000), wall_right = Rect(pos_x, -50, 10, 1000);
 	}
 };
 
@@ -244,7 +266,7 @@ void Main() {
 				break;
 			case Status::_course:
 				if (MouseR.down())
-					if (!player.use_item()) use_time = time.sF();
+					if (!player.useItem()) use_time = time.sF();
 				if (time.sF() - use_time < 0.5) font.draw_center(15, U"アイテムを持っていません", Vec2(500, 100), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(0.2s)));
 
 				if (status_number = course.update((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, MouseL.pressed() * delta)) {
