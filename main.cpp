@@ -25,12 +25,13 @@ class Player {
 
 	Stopwatch stopwatch;
 	double last_jump;
+	double last_inv_jump;
 
 	int item_number;
 	Array<Vec2> position_using_item;
 
   public:
-	Player() : body(150, 430, 30, 70), speed(0, 0), up(false), down(false), right(false), left(false), item_number(0) {
+	Player() : body(150, 430, 30, 70), speed(0, 0), up(false), down(false), right(false), left(false), item_number(0), last_inv_jump(-0.1), last_jump(-0.1) {
 		stopwatch.start();
 		last_rect = body;
 	}
@@ -53,7 +54,7 @@ class Player {
 		if (down) {
 			last_jump = stopwatch.sF();
 		}
-		if (stopwatch.sF() - last_jump < 0.1 && !up) speed.y -= a;
+		if (stopwatch.sF() - last_jump < 0.1 && stopwatch.sF() - last_inv_jump > 0.1 && !up) speed.y -= a;
 	}
 
 	int update(Mat3x2 matrix) {
@@ -84,7 +85,10 @@ class Player {
 		down = arg_down;
 		left = arg_left;
 		right = arg_right;
-		if (up) speed.y = std::max(speed.y, 0.0);
+		if (up) {
+			speed.y = std::max(speed.y, 0.0);
+			last_inv_jump = stopwatch.sF();
+		}
 		if (down) speed.y = std::min(speed.y, 0.0);
 		if (right) speed.x = std::min(speed.x, 0.0);
 		if (left) speed.x = std::max(speed.x, 0.0);
@@ -122,32 +126,40 @@ class Course {
 	double scroll_speed;
 	Mat3x2 matrix;
 
-	Rect wall_right, wall_left;
+	double wall_right_pos, wall_left_pos;
 
   public:
 	Course(Player* player, Vec2 course_size, Array<Rect> course_block, Rect goal, double scroll_speed, Array<Vec2> course_item = Array<Vec2>{Vec2(100, 350)}) :
-	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left(-10, -50, 10, 1000), wall_right(800, -50, 10, 1000) {}
+	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left_pos(0.0), wall_right_pos(800.0) {}
 	int update(double x_speed, double y_speed) {
 		matrix = matrix.translated(-scroll_speed * Scene::DeltaTime(), 0);
 		Transformer2D trans(matrix);
+		wall_left_pos += scroll_speed * Scene::DeltaTime();
+		wall_right_pos += scroll_speed * Scene::DeltaTime();
 		goal.draw(Palette::White);
 		bool u = false, d = false, r = false, l = false;
 		Rect player_body = player->getRect();
 		Rect player_last_body = player->getLastRect();
-		double y = 0.0;
+		double y = 0.0, x = 0.0;
 		for (Rect it : course_block) {
 			it.draw(Palette::Blue);
-			if (it.intersects(player_body)) {
-				if (player_last_body.topCenter().y >= it.bottomCenter().y) {
+			if (it.intersects(player_body.scaled(1.0001))) {
+				if (player_last_body.topCenter().y + 0.1 >= it.bottomCenter().y) {
 					u = true;
 					y = it.bottomCenter().y - player_body.topCenter().y;
 				}
-				if (player_last_body.bottomCenter().y <= it.topCenter().y || player_body.bottomCenter().y == player_last_body.bottomCenter().y) {
+				if (player_last_body.bottomCenter().y - 0.1 <= it.topCenter().y) {
 					d = true;
 					y = it.topCenter().y - player_body.bottomCenter().y;
 				}
-				if (player_last_body.rightCenter().x <= it.leftCenter().x) r = true;
-				if (player_last_body.leftCenter().x >= it.rightCenter().x) l = true;
+				if (player_last_body.rightCenter().x - 0.1 <= it.leftCenter().x) {
+					r = true;
+					x = it.leftCenter().x - player_body.rightCenter().x;
+				}
+				if (player_last_body.leftCenter().x + 0.1 >= it.rightCenter().x) {
+					l = true;
+					x = it.rightCenter().x - player_body.leftCenter().x;
+				}
 			}
 		}
 		for (auto it = course_item.begin(); it != course_item.end();) {
@@ -158,12 +170,23 @@ class Course {
 			}
 			else {
 				it_body.draw(Palette::Red);
+				it++;
 			}
 		}
+		if (player_body.leftCenter().x - 0.1 <= wall_left_pos) {
+			x_speed = wall_left_pos - player_body.leftCenter().x;
+			l = true;
+		}
+		if (player_body.rightCenter().x + 0.1 >= wall_right_pos) {
+			x_speed = wall_right_pos - player_body.leftCenter().x;
+			r = true;
+		}
+
 		player->move(x_speed);
 		player->jump(y_speed);
 		player->setIntersects(u, d, r, l);
 		player->moveY(y);
+		player->moveX(x);
 		int ret = player->update(matrix);
 		if (0 == ret) return -1;
 		if (ret != 1) setPos(ret);
@@ -173,7 +196,7 @@ class Course {
 
 	void setPos(double pos_x) {
 		matrix = Mat3x2::Translate(-pos_x - 400, 0);
-		wall_left = Rect(pos_x - 810, -50, 10, 1000), wall_right = Rect(pos_x, -50, 10, 1000);
+		wall_left_pos = pos_x - 800, wall_right_pos = pos_x;
 	}
 };
 
