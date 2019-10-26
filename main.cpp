@@ -37,6 +37,7 @@ class Player {
 	}
 
 	void move(double a) {
+		Print << U"a: {} "_fmt(a);
 		speed.x = a;
 	}
 
@@ -92,6 +93,7 @@ class Player {
 		if (down) speed.y = std::min(speed.y, 0.0);
 		if (right) speed.x = std::min(speed.x, 0.0);
 		if (left) speed.x = std::max(speed.x, 0.0);
+		Print << speed;
 	}
 	Rect getLastRect() {
 		return last_rect;
@@ -174,11 +176,11 @@ class Course {
 			}
 		}
 		if (player_body.leftCenter().x - 0.1 <= wall_left_pos) {
-			x_speed = wall_left_pos - player_body.leftCenter().x;
+			x = wall_left_pos - player_body.leftCenter().x;
 			l = true;
 		}
 		if (player_body.rightCenter().x + 0.1 >= wall_right_pos) {
-			x_speed = wall_right_pos - player_body.leftCenter().x;
+			x = wall_right_pos - player_body.rightCenter().x;
 			r = true;
 		}
 
@@ -187,6 +189,7 @@ class Course {
 		player->setIntersects(u, d, r, l);
 		player->moveY(y);
 		player->moveX(x);
+		Print << wall_left_pos << wall_right_pos;
 		int ret = player->update(matrix);
 		if (0 == ret) return -1;
 		if (ret != 1) setPos(ret);
