@@ -15,7 +15,7 @@ class FontManager {
 };
 
 class Player {
-	Rect body;
+	RectF body;
 
 	Vec2 speed;
 
@@ -120,8 +120,8 @@ class Course {
 	Player* player;
 	Vec2 course_size;
 
-	Array<Rect> course_block;
-	Rect goal;
+	Array<RectF> course_block;
+	RectF goal;
 
 	Array<Vec2> course_item;
 
@@ -131,7 +131,7 @@ class Course {
 	double wall_right_pos, wall_left_pos;
 
   public:
-	Course(Player* player, Vec2 course_size, Array<Rect> course_block, Rect goal, double scroll_speed, Array<Vec2> course_item = Array<Vec2>{Vec2(100, 350)}) :
+	Course(Player* player, Vec2 course_size, Array<RectF> course_block, RectF goal, double scroll_speed, Array<Vec2> course_item) :
 	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left_pos(0.0), wall_right_pos(800.0) {}
 	int update(double x_speed, double y_speed) {
 		matrix = matrix.translated(-scroll_speed * Scene::DeltaTime(), 0);
@@ -219,9 +219,50 @@ void Main() {
 	double use_time = -1.0;
 	Player player;
 
-	Array<Rect> course_block;
-	course_block << Rect(0, 550, 2400, 50) << Rect(0, 0, 2400, 50);
-	Course course(&player, Vec2(2400, 600), course_block, Rect(2200, 400, 30, 100), 50.0);
+	Array<RectF> course_block;
+	Array<Vec2> course_item;
+	RectF goal_rect;
+	Vec2 course_size;
+	{ 
+		double x, y, w, h;
+		char t;
+		TextReader reader(U"resources/course.txt");
+		if (!reader) throw Error(U"Failed to open course_data txt");
+		String line;
+		int cnt = 0;
+		while (reader.readLine(line)) {
+			if (cnt == 0){
+				x = Parse<double>(line.split(' ')[0]);
+				y = Parse<double>(line.split(' ')[1]);
+				course_size = Vec2(x, y);
+			}
+			else if (cnt == 1) {	
+				x = Parse<double>(line.split(' ')[0]);
+				y = Parse<double>(line.split(' ')[1]);
+				w = Parse<double>(line.split(' ')[2]);
+				h = Parse<double>(line.split(' ')[3]);
+				goal_rect = RectF(x, y, w, h);
+			}
+			else {
+				t = line.at(0);
+				line = line.substr(2);
+				if (t == 'b') {
+					x = Parse<double>(line.split(' ')[0]);
+					y = Parse<double>(line.split(' ')[1]);
+					w = Parse<double>(line.split(' ')[2]);
+					h = Parse<double>(line.split(' ')[3]);
+					course_block << RectF(x, y, w, h);
+				}
+				else {
+					x = Parse<double>(line.split(' ')[0]);
+					y = Parse<double>(line.split(' ')[1]);
+					course_item << Vec2(x, y);
+				}
+			}
+			cnt++;
+		}
+	}
+	Course course(&player, course_size, course_block, goal_rect, 50.0, course_item);
 
 	while (System::Update()) {
 		ClearPrint();
