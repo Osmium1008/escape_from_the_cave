@@ -44,6 +44,7 @@ class Player {
 	bool useItem() {
 		if (item_number == 0) return false;
 		position_using_item << body.pos;
+		item_number--;
 		return true;
 	}
 
@@ -63,11 +64,12 @@ class Player {
 		body.moveBy(speed.asPoint());
 		speed.y += 50 * Scene::DeltaTime();
 		body.draw(Palette::White);
+		if(position_using_item)Print<<position_using_item.back();
 		if (death()) {
 			if (position_using_item) {
 				Vec2 point = position_using_item.back();
 				position_using_item.pop_back();
-				body.setPos(point.Up(30).asPoint());
+				body.setPos(point.Up(30));
 				return point.x;
 			}
 			else {
@@ -198,8 +200,11 @@ class Course {
 	}
 
 	void setPos(double pos_x) {
-		matrix = Mat3x2::Translate(-pos_x - 400, 0);
+		matrix = Mat3x2::Translate(-pos_x + 800, 0);
 		wall_left_pos = pos_x - 800, wall_right_pos = pos_x;
+	}
+	double updateMousePlus() {
+		return wall_left_pos;
 	}
 };
 
@@ -223,7 +228,7 @@ void Main() {
 	Array<Vec2> course_item;
 	RectF goal_rect;
 	Vec2 course_size;
-	{ 
+	{
 		double x, y, w, h;
 		char t;
 		TextReader reader(U"resources/course.txt");
@@ -231,12 +236,12 @@ void Main() {
 		String line;
 		int cnt = 0;
 		while (reader.readLine(line)) {
-			if (cnt == 0){
+			if (cnt == 0) {
 				x = Parse<double>(line.split(' ')[0]);
 				y = Parse<double>(line.split(' ')[1]);
 				course_size = Vec2(x, y);
 			}
-			else if (cnt == 1) {	
+			else if (cnt == 1) {
 				x = Parse<double>(line.split(' ')[0]);
 				y = Parse<double>(line.split(' ')[1]);
 				w = Parse<double>(line.split(' ')[2]);
@@ -339,7 +344,8 @@ void Main() {
 				if (status_number = course.update((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, MouseL.pressed() * delta)) {
 					status = Status::_game_finish;
 				}
-				mouse_plus += 50.0 * Scene::DeltaTime();
+				mouse_plus = course.updateMousePlus();
+				Print<<mouse_plus;
 				break;
 			case Status::_game_finish:
 				if (status_number == -1)
