@@ -16,6 +16,7 @@ class FontManager {
 
 class Player {
 	RectF body;
+	Texture body_texture;
 
 	Vec2 speed;
 
@@ -31,7 +32,7 @@ class Player {
 	Array<Vec2> position_using_item;
 
   public:
-	Player() : body(150, 430, 30, 70), speed(0, 0), up(false), down(false), right(false), left(false), item_number(0), last_inv_jump(-0.1), last_jump(-0.1) {
+	Player(Texture body_texture) : body(150, 430, 30, 70), speed(0, 0), up(false), down(false), right(false), left(false), item_number(0), last_inv_jump(-0.1), last_jump(-0.1), body_texture(body_texture) {
 		stopwatch.start();
 		last_rect = body;
 	}
@@ -63,13 +64,13 @@ class Player {
 		last_rect = body;
 		body.moveBy(speed.asPoint());
 		speed.y += 50 * Scene::DeltaTime();
-		body.draw(Palette::White);
+		body(body_texture).draw(Palette::White);
 		if(position_using_item)Print<<position_using_item.back();
 		if (death()) {
 			if (position_using_item) {
 				Vec2 point = position_using_item.back();
 				position_using_item.pop_back();
-				body.setPos(point.Up(30));
+				body.setPos(point + Vec2(0,50));
 				return point.x;
 			}
 			else {
@@ -222,7 +223,8 @@ void Main() {
 
 	double mouse_plus = 0.0;
 	double use_time = -1.0;
-	Player player;
+	const Texture texture(U"resources/player_illust.png", TextureDesc::Mipped);
+	Player player(texture);
 
 	Array<RectF> course_block;
 	Array<Vec2> course_item;
