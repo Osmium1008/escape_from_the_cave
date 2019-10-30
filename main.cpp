@@ -38,7 +38,6 @@ class Player {
 	}
 
 	void move(double a) {
-		Print << U"a: {} "_fmt(a);
 		speed.x = a;
 	}
 
@@ -74,7 +73,7 @@ class Player {
 				speed = Vec2(0, 0);
 				Vec2 point = position_using_item.back();
 				position_using_item.pop_back();
-				body.setPos(point + Vec2(0,50));
+				body.setPos(point + Vec2(0, 50));
 				return point.x;
 			}
 			else {
@@ -100,7 +99,6 @@ class Player {
 		if (down) speed.y = std::min(speed.y, 0.0);
 		if (right) speed.x = std::min(speed.x, 0.0);
 		if (left) speed.x = std::max(speed.x, 0.0);
-		Print << speed;
 	}
 	Rect getLastRect() {
 		return last_rect;
@@ -121,6 +119,10 @@ class Player {
 	void getItem() {
 		++item_number;
 	}
+
+	double getItemNumber() {
+		return item_number;
+	}
 };
 
 class Course {
@@ -137,9 +139,11 @@ class Course {
 
 	double wall_right_pos, wall_left_pos;
 
+	double clear_rate;
+
   public:
 	Course(Player* player, Vec2 course_size, Array<RectF> course_block, RectF goal, double scroll_speed, Array<Vec2> course_item) :
-	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left_pos(0.0), wall_right_pos(800.0) {}
+	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left_pos(0.0), wall_right_pos(800.0), clear_rate(0.0) {}
 	int update(double x_speed, double y_speed) {
 		matrix = matrix.translated(-scroll_speed * Scene::DeltaTime(), 0);
 		Transformer2D trans(matrix);
@@ -149,6 +153,7 @@ class Course {
 		bool u = false, d = false, r = false, l = false;
 		Rect player_body = player->getRect();
 		Rect player_last_body = player->getLastRect();
+		clear_rate = Max((player_body.x - 150) / (goal.x - 150) * 100, clear_rate);
 		double y = 0.0, x = 0.0;
 		for (Rect it : course_block) {
 			it.draw(Palette::Blue);
@@ -196,7 +201,6 @@ class Course {
 		player->setIntersects(u, d, r, l);
 		player->moveY(y);
 		player->moveX(x);
-		Print << wall_left_pos << wall_right_pos;
 		int ret = player->update(matrix);
 		if (0 == ret) return -1;
 		if (ret != 1) setPos(ret);
@@ -210,6 +214,12 @@ class Course {
 	}
 	double updateMousePlus() {
 		return wall_left_pos;
+	}
+	int getClearRate() {
+		return clear_rate;
+	}
+	double getPlayerPosRate() {
+		return (player->getPos().x - 150) / (goal.x - 150);
 	}
 };
 
@@ -290,7 +300,7 @@ void Main() {
 					time.start();
 				}
 				if (time.sF() > 0.5) {
-					status = Status::_select;
+					status = Status::_course;
 					time.reset();
 				}
 				break;
@@ -321,14 +331,6 @@ void Main() {
 				break;
 			case Status::_tutorial:
 				switch (status_number) {
-					case 0:
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-					case 5:
-					case 6:
-					case 7:
 					case 8:
 						if (MouseL.down()) time.start();
 						if (time.sF() > 0.5) {
@@ -343,21 +345,20 @@ void Main() {
 				}
 				break;
 			case Status::_course:
-				if (MouseR.down())
-					if (!player.useItem()) use_time = time.sF();
-				if (time.sF() - use_time < 0.5) font.draw_center(15, U"アイテムを持っていません", Vec2(500, 100), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(0.2s)));
-
+				BackGroundColor.v = 0.16 + course.getPlayerPosRate() * course.getPlayerPosRate() * course.getPlayerPosRate() * 0.48;
+				if (MouseR.down()) player.useItem();
 				if (status_number = course.update((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, MouseL.pressed() * delta)) {
 					status = Status::_game_finish;
 				}
+				font.draw_center(25, U"クリア率： {}%"_fmt(course.getClearRate()), Vec2(250, 575), ColorF(0, 0, 0, 0), Color(223, 84, 43));
+				font.draw_center(25, U"アイテム個数： {}個"_fmt(player.getItemNumber()), Vec2(550, 575), ColorF(0, 0, 0, 0), Color(60, 214, 29));
 				mouse_plus = course.updateMousePlus();
-				Print<<mouse_plus;
 				break;
 			case Status::_game_finish:
 				if (status_number == -1)
-					font.draw_center(60, U"ゲームオーバー…", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightpink);
+					font.draw_center(60, U"ゲームオーバー...", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Pink);
 				else
-					font.draw_center(60, U"ゲームクリア!!", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightpink);
+					font.draw_center(60, U"ゲームクリア!!", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightgreen);
 				break;
 		}
 	}
