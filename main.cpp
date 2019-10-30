@@ -65,9 +65,13 @@ class Player {
 		body.moveBy(speed.asPoint());
 		speed.y += 50 * Scene::DeltaTime();
 		body(body_texture).draw(Palette::White);
-		if(position_using_item)Print<<position_using_item.back();
 		if (death()) {
 			if (position_using_item) {
+				up = false;
+				down = false;
+				left = false;
+				right = false;
+				speed = Vec2(0, 0);
 				Vec2 point = position_using_item.back();
 				position_using_item.pop_back();
 				body.setPos(point + Vec2(0,50));
@@ -223,7 +227,7 @@ void Main() {
 
 	double mouse_plus = 0.0;
 	double use_time = -1.0;
-	const Texture texture(U"resources/player_illust.png", TextureDesc::Mipped);
+	const Texture texture(Resource(U"game_data/player_illust.png"), TextureDesc::Mipped);
 	Player player(texture);
 
 	Array<RectF> course_block;
@@ -233,7 +237,7 @@ void Main() {
 	{
 		double x, y, w, h;
 		char t;
-		TextReader reader(U"resources/course.txt");
+		TextReader reader(Resource(U"game_data/course.txt"));
 		if (!reader) throw Error(U"Failed to open course_data txt");
 		String line;
 		int cnt = 0;

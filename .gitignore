@@ -12,7 +12,9 @@ build/
 workspace/
 
 #OpenSiv3D Item
-App/
+/App/*
 engine/
+!/App/game_data/
+!/App/Resource.rc
 
 .directory
