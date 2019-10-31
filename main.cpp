@@ -65,6 +65,7 @@ class Player {
 		speed.y += 50 * Scene::DeltaTime();
 		body(body_texture).draw(Palette::White);
 		if (death()) {
+			System::Sleep(1s);
 			if (position_using_item) {
 				up = false;
 				down = false;
@@ -84,7 +85,7 @@ class Player {
 	}
 
 	bool death() {
-		return up && down || right && left || body.pos.y > 600;
+		return up && down || right && left || body.pos.y > 768;
 	}
 
 	void setIntersects(bool arg_up, bool arg_down, bool arg_right, bool arg_left) {
@@ -143,7 +144,7 @@ class Course {
 
   public:
 	Course(Player* player, Vec2 course_size, Array<RectF> course_block, RectF goal, double scroll_speed, Array<Vec2> course_item) :
-	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left_pos(0.0), wall_right_pos(800.0), clear_rate(0.0) {}
+	    player(player), course_size(course_size), course_block(course_block), goal(goal), scroll_speed(scroll_speed), matrix(Mat3x2::Identity()), course_item(course_item), wall_left_pos(0.0), wall_right_pos(1024.0), clear_rate(0.0) {}
 	int update(double x_speed, double y_speed) {
 		matrix = matrix.translated(-scroll_speed * Scene::DeltaTime(), 0);
 		Transformer2D trans(matrix);
@@ -204,13 +205,17 @@ class Course {
 		int ret = player->update(matrix);
 		if (0 == ret) return -1;
 		if (ret != 1) setPos(ret);
-		if (goal.intersects(player->getRect())) return 1;
+		if (goal.intersects(player->getRect())) {
+			System::Sleep(1s);
+			return 1;
+		}
 		return 0;
 	}
 
 	void setPos(double pos_x) {
-		matrix = Mat3x2::Translate(-pos_x + 800, 0);
-		wall_left_pos = pos_x - 800, wall_right_pos = pos_x;
+		pos_x = Max(1024.0, pos_x);
+		matrix = Mat3x2::Translate(-pos_x + 1024, 0);
+		wall_left_pos = pos_x - 1024, wall_right_pos = pos_x;
 	}
 	double updateMousePlus() {
 		return wall_left_pos;
@@ -227,13 +232,13 @@ void Main() {
 	Status status = Status::_start;
 	int status_number = (int)Status::_tutorial;
 
-	FontManager font(60);
+	FontManager font(80);
 	HSV BackGroundColor(231, 0.63, 0.16);
 
 	std::chrono::duration<double> clock = 2.0s;
 	Stopwatch time;
 
-	Window::Resize(800, 600);
+	Window::Resize(1024, 768);
 
 	double mouse_plus = 0.0;
 	double use_time = -1.0;
@@ -292,9 +297,9 @@ void Main() {
 
 		switch (status) {
 			case Status::_start:
-				font.draw_center(60, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
-				font.draw_center(30, U"---- 左クリックをしてください ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
-				font.draw_center(30, U" 2019, 制作者:Osmium_1008 ", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 90), BackGroundColor);
+				font.draw_center(80, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
+				font.draw_center(40, U"---- 左クリックをしてください ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
+				font.draw_center(40, U" 2019, 制作者:Osmium_1008 ", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 100), BackGroundColor);
 				if (MouseL.down()) {
 					clock = 0.2s;
 					time.start();
@@ -305,15 +310,15 @@ void Main() {
 				}
 				break;
 			case Status::_select:
-				font.draw_center(45, U" このゲームを遊ぶのは初めてですか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
-				font.draw_center(30, U" 当てはまる選択肢をクリックしてください", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
-				if (font.draw_center(30, U" はい ", Scene::Center() * Vec2(0.5, 1.5), (Status)status_number == Status::_tutorial ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5)
+				font.draw_center(60, U" このゲームを遊ぶのは初めてですか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
+				font.draw_center(40, U" 当てはまる選択肢をクリックしてください", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
+				if (font.draw_center(40, U" はい ", Scene::Center() * Vec2(0.5, 1.5), (Status)status_number == Status::_tutorial ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5)
 				        .mouseOver()) {
-					font.draw_center(30, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), (Status)status_number == Status::_course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5);
+					font.draw_center(40, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), (Status)status_number == Status::_course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5);
 					if (!time.isRunning()) status_number = (int)Status::_tutorial;
 				}
 				else if (font.draw_center(
-				                 30, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), (Status)status_number == Status::_course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5)
+				                 40, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), (Status)status_number == Status::_course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5)
 				             .mouseOver()) {
 					if (!time.isRunning()) status_number = (int)Status::_course;
 				}
@@ -347,11 +352,11 @@ void Main() {
 			case Status::_course:
 				BackGroundColor.v = 0.16 + course.getPlayerPosRate() * course.getPlayerPosRate() * course.getPlayerPosRate() * 0.48;
 				if (MouseR.down()) player.useItem();
-				if (status_number = course.update((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, MouseL.pressed() * delta)) {
+				if (status_number = course.update(Max(Min((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, 5.0),-5.0), MouseL.pressed() * delta)) {
 					status = Status::_game_finish;
 				}
-				font.draw_center(25, U"クリア率： {}%"_fmt(course.getClearRate()), Vec2(250, 575), ColorF(0, 0, 0, 0), Color(223, 84, 43));
-				font.draw_center(25, U"アイテム個数： {}個"_fmt(player.getItemNumber()), Vec2(550, 575), ColorF(0, 0, 0, 0), Color(60, 214, 29));
+				font.draw_center(30, U"クリア率： {}%"_fmt(course.getClearRate()), Vec2(256, 735), ColorF(0, 0, 0, 0), Color(223, 84, 43));
+				font.draw_center(25, U"アイテム個数： {}個"_fmt(player.getItemNumber()), Vec2(768, 735), ColorF(0, 0, 0, 0), Color(60, 214, 29));
 				mouse_plus = course.updateMousePlus();
 				break;
 			case Status::_game_finish:
