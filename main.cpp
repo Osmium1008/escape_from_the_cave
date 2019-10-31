@@ -66,15 +66,15 @@ class Player {
 		body(body_texture).draw(Palette::White);
 		if (death()) {
 			System::Sleep(1s);
+			up = false;
+			down = false;
+			left = false;
+			right = false;
+			speed = Vec2(0, 0);
 			if (position_using_item) {
-				up = false;
-				down = false;
-				left = false;
-				right = false;
-				speed = Vec2(0, 0);
 				Vec2 point = position_using_item.back();
 				position_using_item.pop_back();
-				body.setPos(point + Vec2(0, 50));
+				body.setPos(point - Vec2(0, 50));
 				return point.x;
 			}
 			else {
@@ -297,8 +297,8 @@ void Main() {
 
 		switch (status) {
 			case Status::_start:
-				font.draw_center(80, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
-				font.draw_center(40, U"---- 左クリックをしてください ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
+				font.draw_center(80, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Skyblue);
+				font.draw_center(40, U"---- 左クリックでスタート ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
 				font.draw_center(40, U" 2019, 制作者:Osmium_1008 ", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 100), BackGroundColor);
 				if (MouseL.down()) {
 					clock = 0.2s;
@@ -310,8 +310,8 @@ void Main() {
 				}
 				break;
 			case Status::_select:
-				font.draw_center(60, U" このゲームを遊ぶのは初めてですか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
-				font.draw_center(40, U" 当てはまる選択肢をクリックしてください", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
+				font.draw_center(60, U" 解説を読みますか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
+				font.draw_center(40, U" (当てはまる選択肢をクリックしてください)", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
 				if (font.draw_center(40, U" はい ", Scene::Center() * Vec2(0.5, 1.5), (Status)status_number == Status::_tutorial ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5)
 				        .mouseOver()) {
 					font.draw_center(40, U"いいえ", Scene::Center() * Vec2(1.5, 1.5), (Status)status_number == Status::_course ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5);
@@ -336,7 +336,9 @@ void Main() {
 				break;
 			case Status::_tutorial:
 				switch (status_number) {
-					case 8:
+					case 0:
+						break;
+					case 1:
 						if (MouseL.down()) time.start();
 						if (time.sF() > 0.5) {
 							status = Status::_course;
@@ -361,9 +363,9 @@ void Main() {
 				break;
 			case Status::_game_finish:
 				if (status_number == -1)
-					font.draw_center(60, U"ゲームオーバー...", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Pink);
+					font.draw_center(80, U"ゲームオーバー...", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Pink);
 				else
-					font.draw_center(60, U"ゲームクリア!!", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightgreen);
+					font.draw_center(80, U"ゲームクリア!!", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightgreen);
 				break;
 		}
 	}
