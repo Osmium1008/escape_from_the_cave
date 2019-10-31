@@ -298,19 +298,19 @@ void Main() {
 		switch (status) {
 			case Status::_start:
 				font.draw_center(80, U"Escape from the cave", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Skyblue);
-				font.draw_center(40, U"---- 左クリックでスタート ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
+				font.draw_center(40, U"---- 左クリックをしてください ----", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 40), BackGroundColor, ColorF(1.0, 1.0, 1.0, Periodic::Square0_1(clock)));
 				font.draw_center(40, U" 2019, 制作者:Osmium_1008 ", Scene::Center() * Vec2(1.0, 1.5) + Vec2(0, 100), BackGroundColor);
 				if (MouseL.down()) {
 					clock = 0.2s;
 					time.start();
 				}
 				if (time.sF() > 0.5) {
-					status = Status::_course;
+					status = Status::_select;
 					time.reset();
 				}
 				break;
 			case Status::_select:
-				font.draw_center(60, U" 解説を読みますか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
+				font.draw_center(60, U" 操作説明を読みますか？", Scene::Center() / Vec2(1.0, 2.0) - Vec2(0, 70), BackGroundColor);
 				font.draw_center(40, U" (当てはまる選択肢をクリックしてください)", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor);
 				if (font.draw_center(40, U" はい ", Scene::Center() * Vec2(0.5, 1.5), (Status)status_number == Status::_tutorial ? Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255) : Color(255, 255, 255), ColorF(0, 0, 0), 1.5)
 				        .mouseOver()) {
@@ -337,9 +337,27 @@ void Main() {
 			case Status::_tutorial:
 				switch (status_number) {
 					case 0:
+						time.reset();
+						font.draw_center(40, U"プレイヤーは棒人間です。\n\nこのプレイヤーが壁に挟まれたり\n下に落ちたりすると死にます。", Scene::Center() * Vec2(1.0, 0.6), Color(0, 0, 0, 0));
+						texture.draw(Scene::Center() * Vec2(0.4, 1.2));
+						if (font.draw_center(35, U" 次へ ", Scene::Center() * Vec2(1.6, 1.7), Color(160, 216, 239, 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
+							status_number = 1;
+							System::Sleep(0.5s);
+						}
 						break;
 					case 1:
-						if (MouseL.down()) time.start();
+						font.draw_center(40, U"プレイヤーはマウスカーソルに向かって進みます。\n\nまた、左クリックでジャンプをすることができます。", Scene::Center() * Vec2(1.0, 0.5), Color(0, 0, 0, 0));
+						if (font.draw_center(35, U" 戻る ", Scene::Center() * Vec2(0.3, 1.7), Color(160, 216, 239, 255), ColorF(0, 0, 0), 1.5).leftClicked()) status_number = 0;
+						if (font.draw_center(35, U" 次へ ", Scene::Center() * Vec2(1.6, 1.7), Color(160, 216, 239, 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
+							status_number = 2;
+							System::Sleep(0.5s);
+						}
+						break;
+					case 2:
+						font.draw_center(40, U"赤い玉はアイテムで、\nプレイヤーが触れるとゲットできます。\nアイテムは右クリックで使用でき、使用すると\n死んだとき一度だけ使用した場所に生き返れます。", Scene::Center() * Vec2(1.0, 0.6), Color(0, 0, 0, 0));
+						if (font.draw_center(35, U" 戻る ", Scene::Center() * Vec2(0.3, 1.7), Color(160, 216, 239, 255), ColorF(0, 0, 0), 1.5).leftClicked()) status_number = 1;
+						if (font.draw_center(35, U"ゲームを開始する", Scene::Center() * Vec2(1.5, 1.7), Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255), ColorF(0, 0, 0), 1.5).leftClicked()) time.start();
+						Circle(Scene::Center() * Vec2(0.4, 1.2), 20).draw(Palette::Red);
 						if (time.sF() > 0.5) {
 							status = Status::_course;
 							status_number = 0;
@@ -354,7 +372,7 @@ void Main() {
 			case Status::_course:
 				BackGroundColor.v = 0.16 + course.getPlayerPosRate() * course.getPlayerPosRate() * course.getPlayerPosRate() * 0.48;
 				if (MouseR.down()) player.useItem();
-				if (status_number = course.update(Max(Min((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, 5.0),-5.0), MouseL.pressed() * delta)) {
+				if (status_number = course.update(Max(Min((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, 5.0), -5.0), MouseL.pressed() * delta)) {
 					status = Status::_game_finish;
 				}
 				font.draw_center(30, U"クリア率： {}%"_fmt(course.getClearRate()), Vec2(256, 735), ColorF(0, 0, 0, 0), Color(223, 84, 43));
