@@ -65,5 +65,3 @@ target_link_libraries(Escape_from_the_cave
         -lboost_filesystem
         -lSiv3D
         )
-
-add_custom_command(TARGET Escape_from_the_cave POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:Escape_from_the_cave>/resources)
