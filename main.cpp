@@ -289,7 +289,7 @@ void Main() {
 		}
 	}
 	Course course(&player, course_size, course_block, goal_rect, 50.0, course_item);
-
+    int score;
 	while (System::Update()) {
 		ClearPrint();
 		Scene::SetBackground(BackGroundColor);
@@ -372,8 +372,10 @@ void Main() {
 			case Status::_course:
 				BackGroundColor.v = 0.16 + course.getPlayerPosRate() * course.getPlayerPosRate() * course.getPlayerPosRate() * 0.48;
 				if (MouseR.down()) player.useItem();
-				if (status_number = course.update(Max(Min((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, 5.0), -5.0), MouseL.pressed() * delta)) {
+				status_number = course.update(Max(Min((Cursor::Pos().x + mouse_plus - player.getPos().x) * Scene::DeltaTime() * 2, 5.0), -5.0), MouseL.pressed() * delta);
+				if (status_number) {
 					status = Status::_game_finish;
+					time.reset();
 				}
 				font.draw_center(30, U"クリア率： {}%"_fmt(course.getClearRate()), Vec2(256, 735), ColorF(0, 0, 0, 0), Color(223, 84, 43));
 				font.draw_center(25, U"アイテム個数： {}個"_fmt(player.getItemNumber()), Vec2(768, 735), ColorF(0, 0, 0, 0), Color(60, 214, 29));
@@ -384,7 +386,21 @@ void Main() {
 					font.draw_center(80, U"ゲームオーバー...", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Pink);
 				else
 					font.draw_center(80, U"ゲームクリア!!", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightgreen);
-				break;
+				score=course.getClearRate()*10;
+				if(status_number==1)score+=(int)player.getItemNumber()*500 + 10000;
+				font.draw_center(40,U"スコア: {}"_fmt(score),Scene::Center()*Vec2(1.0,1.3),BackGroundColor,Palette::Yellow);
+                if (font.draw_center(35, U" ゲームを終了する ", Scene::Center() * Vec2(1.0, 1.7), Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
+                    time.start();
+                }
+                if (time.sF() > 0.5) {
+                    //status = Status::_ranking;
+                    status_number = 0;
+                    System::Exit();
+                    time.restart();
+                }
+                break;
+		    case Status::_ranking:
+		        break;
 		}
 	}
 }
