@@ -239,6 +239,7 @@ void Main() {
 	Stopwatch time;
 
 	Window::Resize(1024, 768);
+	Window::SetTitle(U"Escape from the cave");
 
 	double mouse_plus = 0.0;
 	double use_time = -1.0;
