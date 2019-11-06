@@ -389,13 +389,13 @@ void Main() {
 				score=course.getClearRate()*10;
 				if(status_number==1)score+=(int)player.getItemNumber()*500 + 10000;
 				font.draw_center(40,U"スコア: {}"_fmt(score),Scene::Center()*Vec2(1.0,1.3),BackGroundColor,Palette::Yellow);
-                if (font.draw_center(35, U" ゲームを終了する ", Scene::Center() * Vec2(1.0, 1.7), Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
+                if (font.draw_center(35, U" スタート画面に戻る ", Scene::Center() * Vec2(1.0, 1.7), Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
                     time.start();
                 }
                 if (time.sF() > 0.5) {
-                    //status = Status::_ranking;
+                    status = Status::_start;
                     status_number = 0;
-                    System::Exit();
+                    //System::Exit();
                     time.restart();
                 }
                 break;
