@@ -289,7 +289,7 @@ void Main() {
 		}
 	}
 	Course course(&player, course_size, course_block, goal_rect, 50.0, course_item);
-    int score;
+	int score;
 	while (System::Update()) {
 		ClearPrint();
 		Scene::SetBackground(BackGroundColor);
@@ -386,21 +386,21 @@ void Main() {
 					font.draw_center(80, U"ゲームオーバー...", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Pink);
 				else
 					font.draw_center(80, U"ゲームクリア!!", Scene::Center() / Vec2(1.0, 2.0), BackGroundColor, Palette::Lightgreen);
-				score=course.getClearRate()*10;
-				if(status_number==1)score+=(int)player.getItemNumber()*500 + 10000;
-				font.draw_center(40,U"スコア: {}"_fmt(score),Scene::Center()*Vec2(1.0,1.3),BackGroundColor,Palette::Yellow);
-                if (font.draw_center(35, U" スタート画面に戻る ", Scene::Center() * Vec2(1.0, 1.7), Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
-                    time.start();
-                }
-                if (time.sF() > 0.5) {
-                    status = Status::_start;
-                    status_number = 0;
-                    //System::Exit();
-                    time.restart();
-                }
-                break;
-		    case Status::_ranking:
-		        break;
+				score = course.getClearRate() * 10;
+				if (status_number == 1) score += (int)player.getItemNumber() * 500 + 10000;
+				font.draw_center(40, U"スコア: {}"_fmt(score), Scene::Center() * Vec2(1.0, 1.3), BackGroundColor, Palette::Yellow);
+				if (font.draw_center(35, U" スタート画面に戻る ", Scene::Center() * Vec2(1.0, 1.7), Color(160, 216, 239, time.isRunning() ? Periodic::Square0_1(0.2) * 255 : 255), ColorF(0, 0, 0), 1.5).leftClicked()) {
+					time.start();
+				}
+				if (time.sF() > 0.5) {
+					status = Status::_start;
+					status_number = 0;
+					// System::Exit();
+					time.restart();
+				}
+				break;
+			case Status::_ranking:
+				break;
 		}
 	}
 }
